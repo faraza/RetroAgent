@@ -1,35 +1,20 @@
 'use client';
 
 import { Container, Box, Typography } from '@mui/material';
-import { keyframes } from '@emotion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Vapi from "@vapi-ai/web";
 
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
-const amorphousAnimation = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
-
-const glowAnimation = keyframes`
-  0% {
-    box-shadow: 0 0 20px 10px rgba(255, 102, 102, 0.5); // Softer red glow
-  }
-  50% {
-    box-shadow: 0 0 40px 20px rgba(255, 102, 102, 1);
-  }
-  100% {
-    box-shadow: 0 0 20px 10px rgba(255, 102, 102, 0.5);
-  }
-`;
-
 export default function Retro() {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isVapiEnabled, setIsVapiEnabled] = useState(true); // State to track if Vapi is enabled or disabled
+  const [isVapiEnabled, setIsVapiEnabled] = useState(true);
+  const [volumeLevel, setVolumeLevel] = useState(0);
 
-  // Start Vapi when component mounts
+  const volumeLevelRef = useRef(0);
+  const targetVolumeRef = useRef(0);
+  const animationFrameRef = useRef<number>();
+
   useEffect(() => {
     console.log("Vapi started");
     vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
@@ -42,43 +27,91 @@ export default function Retro() {
     vapi.on('speech-end', () => {
       console.log("speech-end");
       setIsSpeaking(false);
+      targetVolumeRef.current = 0;
+      animateVolumeLevel(); // Continue animating to fade out smoothly
     });
+
+    vapi.on("volume-level", (volume) => {
+      targetVolumeRef.current = volume;
+      animateVolumeLevel();
+    });
+
+    return () => {
+      // Clean up the animation frame when component unmounts
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
-  // Function to handle orb click
+  const animateVolumeLevel = () => {
+    if (animationFrameRef.current) return; // Prevent multiple animation loops
+
+    const animate = () => {
+      const currentVolume = volumeLevelRef.current;
+      const targetVolume = targetVolumeRef.current;
+      const delta = targetVolume - currentVolume;
+      const smoothingFactor = 0.1; // Smaller value for more smoothing
+
+      if (Math.abs(delta) > 0.001) {
+        const newVolume = currentVolume + delta * smoothingFactor;
+        volumeLevelRef.current = newVolume;
+        setVolumeLevel(newVolume);
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        volumeLevelRef.current = targetVolume;
+        setVolumeLevel(targetVolume);
+        animationFrameRef.current = undefined;
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  };
+
   const handleOrbClick = () => {
     if (isVapiEnabled) {
       console.log("Vapi stopped");
-      vapi.stop(); // Disable Vapi
+      vapi.stop();
     } else {
       console.log("Vapi restarted");
-      vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2'); // Restart Vapi
+      vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
     }
-    setIsVapiEnabled(!isVapiEnabled); // Toggle the state
+    setIsVapiEnabled(!isVapiEnabled);
   };
 
   interface OrbProps {
     isSpeaking: boolean;
     isVapiEnabled: boolean;
+    volumeLevel: number;
   }
 
-  const Orb = ({ isSpeaking, isVapiEnabled }: OrbProps) => (
+  const Orb = ({ isSpeaking, isVapiEnabled, volumeLevel }: OrbProps) => (
     <Box
-      onClick={handleOrbClick} // Add click handler
+      onClick={handleOrbClick}
       sx={{
+        position: 'relative',
         width: '150px',
         height: '150px',
         borderRadius: '50%',
-        backgroundColor: isVapiEnabled ? '#FF6666' : '#000000', // Softer red when enabled, black when disabled
+        backgroundColor: isVapiEnabled ? '#FF6666' : '#000000',
         margin: '0 auto',
         cursor: 'pointer',
-        boxShadow: isSpeaking && isVapiEnabled
-          ? '0 0 20px 10px rgba(255, 102, 102, 0.5)' // Initial soft glow
-          : 'none',
-        animation: isSpeaking && isVapiEnabled
-          ? `${glowAnimation} 2s ease-in-out infinite`
-          : 'none',
-        transition: 'background-color 0.5s ease, box-shadow 0.5s ease', // Smooth transition for both color and glow
+        overflow: 'visible',
+        transition: 'background-color 0.5s ease',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '-12.5%',
+left: '-12.5%',
+        width: '125%',
+          height: '125%',
+          borderRadius: '50%',
+          backgroundColor: 'rgba(255, 102, 102, 1)',
+          opacity: isSpeaking && isVapiEnabled ? volumeLevel : 0,
+          transform: `scale(${1 + volumeLevel})`,
+          transition: 'opacity 0.5s ease, transform 0.5s ease',
+          pointerEvents: 'none',
+        },
       }}
     />
   );
@@ -90,7 +123,7 @@ export default function Retro() {
       sx={{
         background: 'linear-gradient(45deg, #FFDEE9, #B5FFFC, #FFDEE9, #B5FFFC)',
         backgroundSize: '400% 400%',
-        animation: `${amorphousAnimation} 15s ease infinite`,
+        animation: '15s ease infinite',
         minHeight: '100vh',
         display: 'flex',
         justifyContent: 'center',
@@ -101,7 +134,11 @@ export default function Retro() {
         <Typography variant="h1" sx={{ color: '#333333' }}>
           Retro Page
         </Typography>
-        <Orb isSpeaking={isSpeaking} isVapiEnabled={isVapiEnabled} />
+        <Orb
+          isSpeaking={isSpeaking}
+          isVapiEnabled={isVapiEnabled}
+          volumeLevel={volumeLevel}
+        />
         {!isVapiEnabled && (
           <Typography
             variant="h6"
