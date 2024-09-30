@@ -3,6 +3,7 @@
 import { Container, Box, Typography } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import Vapi from "@vapi-ai/web";
+import Orb from './Orb';
 
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
@@ -22,6 +23,10 @@ export default function Retro() {
     vapi.on('speech-start', () => {
       console.log("speech-start");
       setIsSpeaking(true);
+    });
+
+    vapi.on('message', (message) => {
+      console.log("message", message);
     });
 
     vapi.on('speech-end', () => {
@@ -79,43 +84,6 @@ export default function Retro() {
     setIsVapiEnabled(!isVapiEnabled);
   };
 
-  interface OrbProps {
-    isSpeaking: boolean;
-    isVapiEnabled: boolean;
-    volumeLevel: number;
-  }
-
-  const Orb = ({ isSpeaking, isVapiEnabled, volumeLevel }: OrbProps) => (
-    <Box
-      onClick={handleOrbClick}
-      sx={{
-        position: 'relative',
-        width: '150px',
-        height: '150px',
-        borderRadius: '50%',
-        backgroundColor: isVapiEnabled ? '#FF6666' : '#000000',
-        margin: '0 auto',
-        cursor: 'pointer',
-        overflow: 'visible',
-        transition: 'background-color 0.5s ease',
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: '-12.5%',
-left: '-12.5%',
-        width: '125%',
-          height: '125%',
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255, 102, 102, 1)',
-          opacity: isSpeaking && isVapiEnabled ? volumeLevel : 0,
-          transform: `scale(${1 + volumeLevel})`,
-          transition: 'opacity 0.5s ease, transform 0.5s ease',
-          pointerEvents: 'none',
-        },
-      }}
-    />
-  );
-
   return (
     <Container
       maxWidth={false}
@@ -138,6 +106,7 @@ left: '-12.5%',
           isSpeaking={isSpeaking}
           isVapiEnabled={isVapiEnabled}
           volumeLevel={volumeLevel}
+          handleOrbClick={handleOrbClick}
         />
         {!isVapiEnabled && (
           <Typography
