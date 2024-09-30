@@ -7,6 +7,22 @@ import Orb from './Orb';
 
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
+
+async function fetchAnalyzeConversation(conversation: string) {
+  const response = await fetch('/api/ConversationAnalyzer', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      conversation: conversation,
+    }),
+  });
+
+  const data = await response.json();
+  console.log('AnalyzeConversation Response:', data);
+}
+
 export default function Retro() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isVapiEnabled, setIsVapiEnabled] = useState(true);
@@ -17,6 +33,10 @@ export default function Retro() {
   const animationFrameRef = useRef<number>();
 
   useEffect(() => {
+    fetchAnalyzeConversation("Hello, how are you?")
+    return () => { } //TODO: Just for testing
+
+
     console.log("Vapi started");
     vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
 
