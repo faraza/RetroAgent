@@ -1,46 +1,59 @@
 'use client';
 
-import { Container, Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
-import { Inter } from 'next/font/google';
-import { useRouter } from 'next/navigation';  // Updated import
+import { Container, Box, Typography, Button } from '@mui/material';
+import { keyframes } from '@emotion/react';
+import { useRouter } from 'next/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
+// Background animation similar to Retro
+const diamondBackgroundAnimation = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
 
 export default function Home() {
-  const router = useRouter();  // Same usage
+  const router = useRouter();
+
+  const handleButtonClick = () => {
+    router.push('/retro');
+  };
 
   return (
-    <Container maxWidth={false} disableGutters sx={{ 
-      background: 'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
+    <Container
+      maxWidth={false}
+      disableGutters
+      sx={{
+        background: 'linear-gradient(45deg, #1fa2ff, #12d8fa, #a6ffcb)',
+        backgroundSize: '400% 400%',
+        animation: `${diamondBackgroundAnimation} 15s ease infinite`,
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       <Box component="main" sx={{ textAlign: 'center', position: 'relative' }}>
-        <Typography variant="h1" sx={{ color: '#FFD700' }}>
+        <Typography variant="h1" sx={{ color: '#FFFFFF', mb: 4 }}>
           Scrum Master
         </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          sx={{ 
-            width: '200px', 
-            height: '200px', 
-            borderRadius: '50%', 
-            fontSize: '1.5rem',
-            backgroundColor: '#FFD700',
-            color: '#000000', 
+        <Button
+          variant="contained"
+          sx={{
+            width: '200px',
+            height: '60px',
+            borderRadius: '30px',
+            fontSize: '1.25rem',
+            background: 'linear-gradient(45deg, #FFFFFF 0%, #CCCCCC 100%)',
+            color: '#333333',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-            transition: 'transform 0.2s, box-shadow 0.2s',          
+            transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              backgroundColor: '#FFC107',
-              transform: 'scale(1.05)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.3)',
-            }
+              background: 'linear-gradient(45deg, #F0F0F0 0%, #BBBBBB 100%)',
+              transform: 'translateY(-5px)',
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.3)',
+            },
           }}
-          onClick={() => router.push('/retro')}  // Same navigation
+          onClick={handleButtonClick}
         >
           Start Retro
         </Button>
