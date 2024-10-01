@@ -29,3 +29,34 @@ export function isRetroboard(obj: any): obj is Retroboard {
 }
 
 export type Retroboard = z.infer<typeof Retroboard>;
+
+export function getSampleRetroboard(): Retroboard {
+  return {
+      users: [
+          {
+              name: "Faraz",
+              whatWentWell: ["Worked really hard", "Put in long hours"],
+              whatWentWrong: ["Had no idea how much work we were going to do"],
+              whatToImprove: [],
+              actionItems: [
+                  "Get key stakeholders involved at the beginning of planning (Owner: Faraz)",
+                  "Prioritize work to handle unexpected absences (Owner: Faraz)"
+              ]
+          },
+          {
+              name: "Steven",
+              whatWentWell: ["Accomplished at least one key goal"],
+              whatWentWrong: ["Got really sick, couldn't get anything done"],
+              whatToImprove: ["Prioritize work to handle unexpected absences"],
+              actionItems: []
+          },
+          {
+              name: "Jeremy",
+              whatWentWell: ["Agreed with Faraz and Steven on positives"],
+              whatWentWrong: [],
+              whatToImprove: [],
+              actionItems: []
+          }
+      ]
+  };
+}

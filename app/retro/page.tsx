@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from 'react';
 import Vapi from "@vapi-ai/web";
 import Orb from './Orb';
 import { isConversationUpdate } from '../types/conversation'
-import { Retroboard, getEmptyRetroboard, isRetroboard } from '../types/retroboard'
+import { Retroboard, getEmptyRetroboard, isRetroboard, getSampleRetroboard } from '../types/retroboard'
+import RenderedRetroboard from './RenderedRetroboard';
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
 
@@ -53,15 +54,15 @@ export default function Retro() {
   const [isVapiEnabled, setIsVapiEnabled] = useState(true);
   const [volumeLevel, setVolumeLevel] = useState(0);
 
-  const [retroboard, setRetroboard] = useState<Retroboard>(getEmptyRetroboard());
+  const [retroboard, setRetroboard] = useState<Retroboard>(getSampleRetroboard());
 
   const volumeLevelRef = useRef(0);
   const targetVolumeRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
   useEffect(() => {
-    console.log("Vapi started");
-    vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
+    // console.log("Vapi started");
+    // vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
 
     vapi.on('speech-start', () => {
       console.log("speech-start");
@@ -84,6 +85,14 @@ export default function Retro() {
     vapi.on("volume-level", (volume) => {
       targetVolumeRef.current = volume;
       animateVolumeLevel();
+    });
+
+    vapi.on('call-end', () => {
+      console.log("call-end");
+      setIsSpeaking(false);
+      targetVolumeRef.current = 0;
+      animateVolumeLevel(); // Continue animating to fade out smoothly
+      setIsVapiEnabled(false);
     });
 
     return () => {
@@ -162,6 +171,7 @@ export default function Retro() {
             Click to restart
           </Typography>
         )}
+        <RenderedRetroboard retroboard={retroboard} />
       </Box>
     </Container>
   );
