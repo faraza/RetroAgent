@@ -5,30 +5,53 @@ import { useState, useEffect, useRef } from 'react';
 import Vapi from "@vapi-ai/web";
 import Orb from './Orb';
 import { isConversationUpdate } from '../types/conversation'
-
+import { Retroboard, getEmptyRetroboard, isRetroboard } from '../types/retroboard'
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
 
-async function fetchAnalyzeConversation(message: any) {
-    if (!isConversationUpdate(message)) {        
-        console.log("Invalid conversation format. Message:", message);
-        return;
-    }
+async function fetchAnalyzeConversation(message: any, currentRetroboard: Retroboard) {
+  if (!isConversationUpdate(message)) {
+    return;
+  }
+  if (message.conversation.length === 0) {
+    console.log("No conversation, skipping");
+    return currentRetroboard;
+  }
 
-    console.log("Analyzing conversation:", message);
+  const lastMessage = message.conversation[message.conversation.length - 1];
+  if (!lastMessage.content.trim().toLowerCase().startsWith("user:")) {
+    console.log("Not a user message, skipping");
+    return currentRetroboard;
+  }
 
-    const response = await fetch('/api/ConversationAnalyzer', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            message: message,
-        }),
-    });
+  message.messages = []
+  message.messagesOpenAIFormatted = []
 
-    const data = await response.json();
-    console.log('AnalyzeConversation Response:', data);
+  console.log("Analyzing conversation:", message.conversation);
+
+  const response = await fetch('/api/ConversationAnalyzer', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: message,
+      retroboard: currentRetroboard,
+    }),
+  });
+
+  const data = await response.json();
+  console.log('AnalyzeConversation Response:', data);
+
+  if (isRetroboard(data.retroboard)) {
+    const retroboardJson = JSON.stringify(data.retroboard);
+    console.log("Retroboard update: ", retroboardJson);
+    return data.retroboard;
+  }
+  else {
+    console.error("Invalid retroboard object");
+    return currentRetroboard;
+  }
 }
 
 export default function Retro() {
@@ -36,11 +59,13 @@ export default function Retro() {
   const [isVapiEnabled, setIsVapiEnabled] = useState(true);
   const [volumeLevel, setVolumeLevel] = useState(0);
 
+  const [retroboard, setRetroboard] = useState<Retroboard>(getEmptyRetroboard());
+
   const volumeLevelRef = useRef(0);
   const targetVolumeRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
-  useEffect(() => {    
+  useEffect(() => {
     console.log("Vapi started");
     vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
 
@@ -49,8 +74,10 @@ export default function Retro() {
       setIsSpeaking(true);
     });
 
-    vapi.on('message', (message) => {      
-      fetchAnalyzeConversation(message);
+    vapi.on('message', (message) => {
+      fetchAnalyzeConversation(message, retroboard).then((newRetroboard) => {
+        setRetroboard(newRetroboard);
+      });
     });
 
     vapi.on('speech-end', () => {

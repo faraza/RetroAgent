@@ -16,10 +16,17 @@ const Retroboard = z.object({
     users: z.array(User)
 });
 
+function getEmptyRetroboard(){
+    return {
+        users: []
+    }
+}
+
+
 
 dotenv.config();
 
-async function analyzeConversation(transcript) {
+async function analyzeConversation(transcript, retroboard) {
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
     });
@@ -28,13 +35,13 @@ async function analyzeConversation(transcript) {
     const completion = await openai.beta.chat.completions.parse({
         model: "gpt-4o-2024-08-06",
         messages: [
-            { role: "system", content: "You will create sprint retrospective board based on the conversation. First, identify all the participants. They are announced in the beginning of the conversation. Figure out which speaker is talking is based on the context. Then, for each speaker, parse out what they said went well and make that a list of short bullet points. Then, parse out what they said went wrong and make that a list of short bullet points. Then, parse out what they said could be improved and make that a list of short bullet points. Then, parse out the action items and assign them to the appropriate user. If a user hasn't spoken yet besides introducing themselves, put them in the retroboard but leave the bullet points empty. If no users have introduced themselves, leave the users array empty." },
+            { role: "system", content: "You will create sprint retrospective board based on the conversation. First, identify all the participants. They are announced in the beginning of the conversation. Figure out which speaker is talking is based on the context. Then, for each speaker, parse out what they said went well and make that a list of short bullet points. Then, parse out what they said went wrong and make that a list of short bullet points. Then, parse out what they said could be improved and make that a list of short bullet points. Then, parse out the action items and assign them to the appropriate user. If a user hasn't spoken yet besides introducing themselves, put them in the retroboard but leave the bullet points empty. If no users have introduced themselves, leave the users array empty. Here is the existing retroboard. Change it based on the conversation if necessary: " + JSON.stringify(retroboard, null, 2) },
             { role: "user", content: transcript }
         ],
         response_format: zodResponseFormat(Retroboard, "retrospectiveBoard"),
     });
 
-    const retroboard = completion.choices[0].message.parsed;
+    retroboard = completion.choices[0].message.parsed;
     return retroboard;
 
 }
@@ -43,7 +50,7 @@ async function analyzeConversation(transcript) {
 async function testOneLineAtATime(transcript){
     const lines = transcript.split('\n');
     let partialTranscript = '';
-
+    let retroboard = getEmptyRetroboard();
     for (let i = 0; i < lines.length; i++) {
         partialTranscript += lines[i] + '\n';
         console.log(`Processing line ${i + 1}:`);
@@ -51,7 +58,7 @@ async function testOneLineAtATime(transcript){
         if (lines[i].trim().startsWith('user:')) {
             console.log("Analyzing conversation...");
             console.log("Last line: " + lines[i]);
-            const retroboard = await analyzeConversation(partialTranscript);
+            retroboard = await analyzeConversation(partialTranscript, retroboard);
             printResult(retroboard);
             console.log('\n---\n');
         }
@@ -62,10 +69,10 @@ async function testOneLineAtATime(transcript){
 }
 
 async function oneListTest(){
-    console.log("******ANALYZING PARTIAL CONVERSATION 1******")
-    await testOneLineAtATime(partialConvo1);    
+    // console.log("******ANALYZING PARTIAL CONVERSATION 1******")
+    // await testOneLineAtATime(partialConvo1);    
     console.log("******ANALYZING COMPLETE CONVERSATION 1******")
-    // await testOneLineAtATime(completeConvo1);
+    await testOneLineAtATime(completeConvo1);
 }
 
 async function testAnalyzeConversation() {

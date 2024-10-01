@@ -4,7 +4,7 @@ export type ConversationUpdate = {
         role: string;
         content: string;
     }>;
-    messages: Array<{
+    messages?: Array<{
         role: string;
         message: string;
         time: number;
@@ -13,7 +13,7 @@ export type ConversationUpdate = {
         duration?: number;
         source?: string;
     }>;
-    messagesOpenAIFormatted: Array<{
+    messagesOpenAIFormatted?: Array<{
         role: string;
         content: string;
     }>;
