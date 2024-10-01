@@ -4,23 +4,31 @@ import { Container, Box, Typography } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import Vapi from "@vapi-ai/web";
 import Orb from './Orb';
+import { isConversationUpdate } from '../types/conversation'
 
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
 
-async function fetchAnalyzeConversation(conversation: string) {
-  const response = await fetch('/api/ConversationAnalyzer', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      conversation: conversation,
-    }),
-  });
+async function fetchAnalyzeConversation(message: any) {
+    if (!isConversationUpdate(message)) {        
+        console.log("Invalid conversation format. Message:", message);
+        return;
+    }
 
-  const data = await response.json();
-  console.log('AnalyzeConversation Response:', data);
+    console.log("Analyzing conversation:", message);
+
+    const response = await fetch('/api/ConversationAnalyzer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: message,
+        }),
+    });
+
+    const data = await response.json();
+    console.log('AnalyzeConversation Response:', data);
 }
 
 export default function Retro() {
@@ -32,11 +40,7 @@ export default function Retro() {
   const targetVolumeRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
-  useEffect(() => {
-    fetchAnalyzeConversation("Hello, how are you?")
-    return () => { } //TODO: Just for testing
-
-
+  useEffect(() => {    
     console.log("Vapi started");
     vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
 
@@ -45,8 +49,8 @@ export default function Retro() {
       setIsSpeaking(true);
     });
 
-    vapi.on('message', (message) => {
-      console.log("message", message);
+    vapi.on('message', (message) => {      
+      fetchAnalyzeConversation(message);
     });
 
     vapi.on('speech-end', () => {

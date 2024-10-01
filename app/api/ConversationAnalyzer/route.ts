@@ -4,11 +4,25 @@ import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { NextRequest, NextResponse } from 'next/server'; // For the App Router
+import { isConversationUpdate } from '../../types/conversation'
 
 // Explicitly define a POST method handler
 export async function POST(req: NextRequest) {
     try {
-        const { conversation } = await req.json(); // Get the conversation from the request body
+        const { message } = await req.json(); // Get the conversation from the request body
+
+        if (!isConversationUpdate(message)) {
+            return NextResponse.json({ error: "Invalid conversation format" }, { status: 400 });
+        }
+
+        // Extract the last sentence from the conversation
+        const lastMessage = message.conversation[message.conversation.length - 1];
+        const lastSentence = lastMessage.content.split('.').pop()?.trim() || lastMessage.content;
+
+        // Return the last sentence instead of processing with OpenAI
+        return NextResponse.json({ lastSentence });
+
+        //TODO: Actually analyze the conversation
 
         const openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY, // Access environment variable
@@ -24,7 +38,7 @@ export async function POST(req: NextRequest) {
             model: "gpt-4o-2024-08-06",
             messages: [
                 { role: "system", content: "Extract the event information." },
-                { role: "user", content: conversation },
+                { role: "user", content: message },
             ],
             response_format: zodResponseFormat(CalendarEvent, "event"),
         });
@@ -33,6 +47,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ event }); // Return the response as JSON
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
