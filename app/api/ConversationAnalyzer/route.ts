@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'; // For the App Router
 
 
 
-export async function analyzeConversation(transcript: string, retroboard: Retroboard) {
+async function analyzeConversation(transcript: string, retroboard: Retroboard) {
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
     });
