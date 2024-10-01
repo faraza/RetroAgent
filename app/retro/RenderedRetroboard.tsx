@@ -10,7 +10,11 @@ const pastelColors = ['#FFDEE9', '#C6FFDD', '#FFFCB6', '#FFABAB', '#AFCBFF', '#E
 const darkerPastelColors = ['#FFC4D6', '#A1E7C0', '#FFEB8A', '#FF8888', '#89BFFF', '#C69BD9']; // Slightly darker pastels for sections
 
 const RenderedRetroboard: React.FC<RenderedRetroboardProps> = ({ retroboard }) => {
-  return (
+    if (!retroboard || !retroboard.users || retroboard.users.length === 0) {
+        return(<></>)
+    }
+  
+    return (
     <Box sx={{ flexGrow: 1, padding: 3 }}>
       <Grid container spacing={3}>
         {retroboard.users.map((user, index) => (

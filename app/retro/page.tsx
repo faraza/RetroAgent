@@ -9,23 +9,26 @@ import { Retroboard, getEmptyRetroboard, isRetroboard, getSampleRetroboard } fro
 import RenderedRetroboard from './RenderedRetroboard';
 const vapi = new Vapi("5903c1e9-194f-4d25-8fa9-5f242f5cc775");
 
-
-async function fetchAnalyzeConversation(message: any, currentRetroboard: Retroboard) {
+function shouldAnalyzeConversation(message: any): boolean {
   if (!isConversationUpdate(message)) {
-    return;
+    return false;
   }
   if (message.conversation.length === 0) {
-    return currentRetroboard;
+    return false;
   }
 
   const lastMessage = message.conversation[message.conversation.length - 1];
   if (!lastMessage.role.toLowerCase().startsWith("user")) {
-    return currentRetroboard;
+    return false;
   }
 
-  message.messages = []
-  message.messagesOpenAIFormatted = []
+  return true;
+}
 
+async function fetchAnalyzeConversation(message: any, currentRetroboard: Retroboard): Promise<Retroboard> {  
+
+  message.messages = [];
+  message.messagesOpenAIFormatted = [];
 
   const response = await fetch('/api/ConversationAnalyzer', {
     method: 'POST',
@@ -42,8 +45,7 @@ async function fetchAnalyzeConversation(message: any, currentRetroboard: Retrobo
 
   if (isRetroboard(data.retroboard)) {
     return data.retroboard;
-  }
-  else {
+  } else {
     console.error("Invalid retroboard object");
     return currentRetroboard;
   }
@@ -54,15 +56,15 @@ export default function Retro() {
   const [isVapiEnabled, setIsVapiEnabled] = useState(true);
   const [volumeLevel, setVolumeLevel] = useState(0);
 
-  const [retroboard, setRetroboard] = useState<Retroboard>(getSampleRetroboard());
+  const [retroboard, setRetroboard] = useState<Retroboard>(getEmptyRetroboard());
 
   const volumeLevelRef = useRef(0);
   const targetVolumeRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
   useEffect(() => {
-    // console.log("Vapi started");
-    // vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
+    console.log("Vapi started");
+    vapi.start('a0e47d57-4db1-4d19-b99e-a27920881da2');
 
     vapi.on('speech-start', () => {
       console.log("speech-start");
@@ -70,9 +72,12 @@ export default function Retro() {
     });
 
     vapi.on('message', (message) => {
-      fetchAnalyzeConversation(message, retroboard).then((newRetroboard) => {
-        setRetroboard(newRetroboard);
-      });
+      if(shouldAnalyzeConversation(message)) {
+        fetchAnalyzeConversation(message, retroboard).then((newRetroboard) => {
+          console.log("newRetroboard", newRetroboard);
+          setRetroboard(newRetroboard);
+        });
+      }
     });
 
     vapi.on('speech-end', () => {
