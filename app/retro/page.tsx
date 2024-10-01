@@ -14,20 +14,17 @@ async function fetchAnalyzeConversation(message: any, currentRetroboard: Retrobo
     return;
   }
   if (message.conversation.length === 0) {
-    console.log("No conversation, skipping");
     return currentRetroboard;
   }
 
   const lastMessage = message.conversation[message.conversation.length - 1];
-  if (!lastMessage.content.trim().toLowerCase().startsWith("user:")) {
-    console.log("Not a user message, skipping");
+  if (!lastMessage.role.toLowerCase().startsWith("user")) {
     return currentRetroboard;
   }
 
   message.messages = []
   message.messagesOpenAIFormatted = []
 
-  console.log("Analyzing conversation:", message.conversation);
 
   const response = await fetch('/api/ConversationAnalyzer', {
     method: 'POST',
@@ -41,11 +38,8 @@ async function fetchAnalyzeConversation(message: any, currentRetroboard: Retrobo
   });
 
   const data = await response.json();
-  console.log('AnalyzeConversation Response:', data);
 
   if (isRetroboard(data.retroboard)) {
-    const retroboardJson = JSON.stringify(data.retroboard);
-    console.log("Retroboard update: ", retroboardJson);
     return data.retroboard;
   }
   else {
