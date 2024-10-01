@@ -154,7 +154,7 @@ export default function Retro() {
     >
       <Box component="main" sx={{ textAlign: 'center', position: 'relative' }}>
         <Typography variant="h1" sx={{ color: '#333333' }}>
-          Retro Page
+          Sprint Retrospective
         </Typography>
         <Orb
           isSpeaking={isSpeaking}

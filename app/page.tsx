@@ -34,7 +34,7 @@ export default function Home() {
     >
       <Box component="main" sx={{ textAlign: 'center', position: 'relative' }}>
         <Typography variant="h1" sx={{ color: '#FFFFFF', mb: 4 }}>
-          Scrum Master 3
+          Welcome to Scrum Master AI
         </Typography>
         <Button
           variant="contained"
